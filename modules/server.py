@@ -37,10 +37,15 @@ class Server:
         while 1:
             data = clientsocket.recv(1024)
             if not data:
+                clientsocket.close()
                 break
             else:
                 result = pickle.loads(data)
-                package.parse(result)
+                awnser = package.parse(result)
+                if len(awnser) > 0:
+                    clientsocket.send(pickle.dumps(awnser))
+                    awnser.clear()
+
         clientsocket.close()
 
     def run(self):

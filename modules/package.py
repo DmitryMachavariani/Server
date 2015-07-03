@@ -13,6 +13,7 @@ def buildpackage(type, data):
 
 
 def parse(package):
+    result = []
     if package[0] == "login":
         if not os.path.isdir("users"):
             os.mkdir("users", 0o777)
@@ -23,3 +24,10 @@ def parse(package):
 
             if password.strip() == package[1][1]:
                 log.writelog("Успешная авторизация: " + package[1][0])
+                result.append("login")
+                result.append("success")
+            else:
+                result.append("login")
+                result.append("failed")
+
+    return result
