@@ -1,7 +1,12 @@
 import pickle
-import os
+import hashlib
+import pymysql
 
 import modules.log as log
+
+conn = pymysql.connect(host='127.0.0.1', user='root', passwd='1752dima', db='my_skype')
+cur = conn.cursor()
+log.writelog('База данных подключена')
 
 
 def buildpackage(type, data):
@@ -15,19 +20,25 @@ def buildpackage(type, data):
 def parse(package):
     result = []
     if package[0] == "login":
-        if not os.path.isdir("users"):
-            os.mkdir("users", 0o777)
-        if os.path.isfile(os.path.join(os.path.curdir + "/users/", package[1][0])):
-            file = open(os.path.join(os.path.curdir + "/users/" + package[1][0]))
-            password = file.readline()
-            file.close()
+        username = package[1][0]
+        password = hashlib.md5(package[1][1].encode('UTF-8')).hexdigest()
+        cur.execute("SELECT * FROM tb_users WHERE username=%s AND password=%s", (username, password))
+        if cur.fetchone() is None:
+            result.append("login")
+            result.append("failed")
+        else:
+            log.writelog("Успешная авторизация: " + package[1][0])
+            result.append("login")
+            result.append("success")
 
-            if password.strip() == package[1][1]:
-                log.writelog("Успешная авторизация: " + package[1][0])
-                result.append("login")
-                result.append("success")
-            else:
-                result.append("login")
-                result.append("failed")
+    if package[0] == "getfriend":
+        username = package[1][0]
+        cur.execute("SELECT friend_username FROM tb_friends WHERE username=%s", username)
+        res = cur.fetchall()
+
+        if res is None:
+            result.append("None")
+        else:
+            result.append(res)
 
     return result
